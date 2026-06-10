@@ -1,0 +1,52 @@
+# 优先级：critical > high > medium > low > info
+rules:
+  - name: webshell_write
+    pattern: 'file_put_contents|fwrite|fputs.*\.(php|jsp|asp|aspx)'
+    level: critical
+    reason: 正在向Web目录写入可执行脚本文件，典型的Web Shell植入行为
+    
+  - name: reverse_shell
+    pattern: 'bash.*sh -i|nc -e|socat exec|mkfifo.*nc'
+    level: critical
+    reason: 反弹Shell命令，攻击者尝试获取服务器控制权
+    
+  - name: base64_command
+    pattern: 'echo.*\|base64 -d|base64.*\|sh|eval.*base64'
+    level: high
+    reason: Base64编码的命令执行，常被用于绕过检测
+    
+  - name: health_check_netstat
+    pattern: 'netstat -tunl.*grep'
+    exclude_when: 'scriptName.*(alive|health|check|probe|monitor)'
+    level: false_positive
+    reason: 健康检查脚本使用netstat查看端口，属正常运维行为
+    
+  - name: curl_wget_download
+    pattern: 'curl|wget.*http|ftp'
+    level: medium
+    reason: 从外部下载文件，需确认下载源和目标路径
+    
+  - name: crontab_persistence
+    pattern: 'echo.*cron|>>.*crontab|crond'
+    level: high
+    reason: 写入计划任务，攻击者常用来持久化
+
+  - name: base64_in_http_header
+    pattern: 'Accept-Charset.*[A-Za-z0-9+/=]{40,}|Accept-Language.*[A-Za-z0-9+/=]{40,}|Referer.*base64'
+    level: critical
+    reason: 非常规HTTP头中携带Base64编码载荷，典型的WAF绕过Web Shell植入手法
+
+  - name: php_disable_functions_bypass
+    pattern: 'create_function|extract.*\$_(POST|GET|REQUEST)|assert.*\$_(POST|GET)'
+    level: critical
+    reason: 利用create_function/extract/assert绕过PHP disable_functions实现远程代码执行
+
+  - name: backup_file_probe
+    pattern: 'HEAD.*/(wwwroot|web|backup|bak|database|db|dump|config|site)\.(zip|rar|tar\.gz|7z|bak|sql)'
+    level: medium
+    reason: 探测Web目录下是否存在备份文件(源码/数据库/配置)，属于信息收集侦察行为
+
+  - name: webshell_file_upload
+    pattern: 'filename=.*\.(php|jsp|asp|aspx|phtml|php5|cgi).*file_path.*upload'
+    level: critical
+    reason: 通过文件上传功能植入Web Shell，攻击者指定上传路径到Web可访问目录

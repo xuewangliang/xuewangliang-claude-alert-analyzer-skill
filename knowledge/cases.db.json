@@ -1,0 +1,11 @@
+[
+  {
+    "id": "a3f9c2e1",
+    "original": "netstat -tunl | grep -Ew .:8080 || netstat -tunl | grep -w 8080",
+    "script_name": "alive",
+    "level": "false_positive",
+    "reason": "健康检查脚本使用netstat查看端口监听状态，无恶意行为",
+    "disposal": "标记为误报，加入白名单",
+    "created_at": "2026-01-15T10:30:00"
+  }
+]
